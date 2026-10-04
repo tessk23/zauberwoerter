@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Zauberwörter</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#FDF4FF;
+  --bg2:#F3E8FF;
+  --ink:#43296B;
+  --ink-soft:#7C5BA6;
+  --pink:#FF4FA3;
+  --pink-deep:#E0297F;
+  --purple:#8B5CF6;
+  --yellow:#FFC93C;
+  --mint:#3ECFAC;
+  --card:#FFFFFF;
+  --tile:#FFFFFF;
+  --tile-border:#E9D5FF;
+  --shadow:0 6px 0 rgba(139,92,246,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#241536;
+    --bg2:#2E1B46;
+    --ink:#F3E8FF;
+    --ink-soft:#C4A8EE;
+    --card:#352052;
+    --tile:#3D2760;
+    --tile-border:#5B3A8C;
+    --shadow:0 6px 0 rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#241536;
+  --bg2:#2E1B46;
+  --ink:#F3E8FF;
+  --ink-soft:#C4A8EE;
+  --card:#352052;
+  --tile:#3D2760;
+  --tile-border:#5B3A8C;
+  --shadow:0 6px 0 rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+html,body{height:100%}
+body{
+  font-family:'Chalkboard SE','Comic Sans MS','Arial Rounded MT Bold','Baloo 2',system-ui,sans-serif;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,201,60,.22) 0 120px, transparent 140px),
+    radial-gradient(circle at 85% 20%, rgba(255,79,163,.16) 0 100px, transparent 130px),
+    radial-gradient(circle at 20% 90%, rgba(62,207,172,.16) 0 110px, transparent 140px),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  color:var(--ink);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  touch-action:manipulation;
+}
+.screen{flex:1;display:none;flex-direction:column;align-items:center;padding:16px;min-height:0;overflow-y:auto}
+.screen.active{display:flex}
+h1{font-weight:800;font-size:clamp(2rem,9vw,3rem);line-height:1.05;text-align:center;
+  background:linear-gradient(90deg,var(--pink),var(--purple),var(--mint));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.subtitle{color:var(--ink-soft);font-weight:500;text-align:center;margin-top:6px}
+
+.btn{
+  font-family:inherit;font-weight:800;font-size:1.25rem;color:#fff;border:none;cursor:pointer;
+  padding:16px 30px;border-radius:999px;
+  background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+  box-shadow:0 5px 0 var(--pink-deep),0 10px 18px rgba(224,41,127,.3);
+  transition:transform .08s;
+  touch-action:manipulation;
+}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--pink-deep)}
+.btn.secondary{background:linear-gradient(180deg,var(--purple),#6D3BE0);box-shadow:0 5px 0 #5B2BC9,0 10px 18px rgba(109,59,224,.3)}
+.btn.secondary:active{box-shadow:0 1px 0 #5B2BC9}
+.btn.ghost{background:var(--card);color:var(--ink-soft);box-shadow:0 4px 0 var(--tile-border);font-size:1rem;padding:10px 20px;font-weight:700}
+.btn.ghost:active{box-shadow:0 1px 0 var(--tile-border)}
+.btn:focus-visible,.tile:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+
+.topbar{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:800;font-size:1rem;box-shadow:var(--shadow);border:none;font-family:inherit;color:var(--ink);cursor:pointer}
+
+/* ---------- Start ---------- */
+#homeArt{font-size:clamp(3.5rem,18vw,6rem);margin:10px 0 2px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+@media (prefers-reduced-motion: reduce){
+  #homeArt{animation:none}
+  .word-card,.tile,.sticker-pop{animation:none !important}
+}
+.home-stack{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:100%}
+
+/* ---------- Wort merken ---------- */
+.word-card{
+  background:var(--card);border-radius:28px;box-shadow:var(--shadow);
+  padding:34px 26px;margin:14px 0;max-width:560px;width:100%;
+  text-align:center;animation:pop .35s cubic-bezier(.2,1.6,.4,1)
+}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.big-word{font-size:clamp(2.2rem,11vw,4rem);font-weight:800;letter-spacing:.04em;color:var(--purple);word-break:break-word}
+.hint{color:var(--ink-soft);font-weight:500;margin-top:10px}
+
+/* ---------- Schreiben ---------- */
+#writeScreen{padding:10px 12px}
+.canvas-wrap{
+  flex:1;width:100%;max-width:640px;min-height:0;position:relative;
+  background:var(--card);border-radius:24px;box-shadow:var(--shadow);
+  border:3px dashed var(--tile-border);overflow:hidden;margin:10px 0;
+}
+#pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.canvas-empty{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-soft);font-weight:700;font-size:1.1rem;pointer-events:none;text-align:center;padding:0 20px
+}
+.write-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:640px}
+
+/* ---------- Buchstaben-Check ---------- */
+.slots{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:12px 0;max-width:620px;width:100%;--slotW:42px}
+.word-group{display:flex;gap:6px;flex-wrap:nowrap}
+.slot{
+  width:var(--slotW);height:calc(var(--slotW)*1.3);border-radius:12px;background:var(--card);
+  border:3px solid var(--tile-border);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:calc(var(--slotW)*0.62);color:var(--purple);flex:0 0 auto
+}
+.slot.filled{border-color:var(--purple)}
+.tiles{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;max-width:620px;margin-top:6px}
+.tile{
+  min-width:52px;height:58px;padding:0 10px;border-radius:14px;background:var(--tile);
+  border:3px solid var(--tile-border);font-family:inherit;font-weight:800;font-size:1.5rem;
+  color:var(--ink);cursor:pointer;box-shadow:0 4px 0 var(--tile-border);
+  transition:transform .08s;touch-action:manipulation
+}
+.tile:active{transform:translateY(3px);box-shadow:none}
+.tile.used{opacity:.25;pointer-events:none}
+.mini-drawing{max-width:620px;width:100%;border-radius:18px;background:var(--card);box-shadow:var(--shadow);margin-top:6px}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* ---------- Erfolg ---------- */
+.sticker-pop{font-size:clamp(4rem,24vw,7rem);animation:pop .5s cubic-bezier(.2,1.8,.4,1)}
+.reveal-word{font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;color:var(--mint)}
+
+/* ---------- Sticker-Album ---------- */
+.album{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:560px;margin:16px 0}
+.album .s{font-size:2.6rem;background:var(--card);border-radius:18px;padding:10px;box-shadow:var(--shadow)}
+.empty-note{color:var(--ink-soft);font-weight:500;text-align:center;margin:20px;max-width:380px}
+
+/* ---------- Eltern ---------- */
+.panel{background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:20px;width:100%;max-width:560px;margin-top:14px}
+.panel h2{font-size:1.3rem;font-weight:800;margin-bottom:10px}
+.add-row{display:flex;gap:8px}
+.add-row input{
+  flex:1;font-family:inherit;font-size:1.1rem;font-weight:700;color:var(--ink);
+  padding:12px 14px;border-radius:14px;border:3px solid var(--tile-border);background:var(--bg);min-width:0
+}
+.add-row input:focus{outline:none;border-color:var(--purple)}
+.word-list{list-style:none;margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.word-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border-radius:14px;padding:10px 14px;font-weight:700;font-size:1.05rem}
+.del{border:none;background:none;font-size:1.2rem;cursor:pointer;color:var(--pink-deep);font-weight:800;padding:4px 8px}
+.gate-input{font-size:1.6rem;width:110px;text-align:center}
+.msg{color:var(--ink-soft);font-weight:600;margin-top:10px;min-height:1.4em;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- START -->
+<section class="screen active" id="homeScreen">
+  <div class="topbar">
+    <button class="chip" id="albumBtn">⭐ <span id="stickerCount">0</span> Sticker</button>
+    <button class="chip" id="parentBtn" aria-label="Elternbereich">⚙️ Eltern</button>
+  </div>
+  <div class="home-stack">
+    <div id="homeArt">🦄</div>
+    <h1>Zauberwörter</h1>
+    <p class="subtitle">Merk dir das Wort, schreib es mit dem Finger<br>und sammle magische Sticker!</p>
+    <button class="btn" id="startBtn">Los geht's! ✨</button>
+    <p class="msg" id="homeMsg"></p>
+  </div>
+</section>
+
+<!-- WORT MERKEN -->
+<section class="screen" id="memorizeScreen">
+  <div class="home-stack">
+    <p class="subtitle">Merk dir dieses Wort ganz genau:</p>
+    <div class="word-card"><div class="big-word" id="wordDisplay"></div></div>
+    <button class="btn" id="memorizedBtn">Ich hab's mir gemerkt! 🧠</button>
+  </div>
+</section>
+
+<!-- SCHREIBEN -->
+<section class="screen" id="writeScreen">
+  <p class="subtitle" style="margin-top:4px">Schreib das Wort aus deinem Kopf! 🪄</p>
+  <div class="canvas-wrap">
+    <canvas id="pad"></canvas>
+    <div class="canvas-empty" id="padHint">Schreib hier mit deinem Finger ✍️</div>
+  </div>
+  <div class="write-actions">
+    <button class="btn ghost" id="clearBtn">🧽 Nochmal</button>
+    <button class="btn ghost" id="peekBtn">👀 Spicken</button>
+    <button class="btn" id="doneWritingBtn">Fertig! ✨</button>
+  </div>
+</section>
+
+<!-- BUCHSTABEN-CHECK -->
+<section class="screen" id="checkScreen">
+  <p class="subtitle" style="margin-top:4px">Das hast du geschrieben:</p>
+  <canvas class="mini-drawing" id="miniPad" height="110"></canvas>
+  <p class="subtitle">Tipp die Buchstaben in der richtigen Reihenfolge!</p>
+  <div class="slots" id="slots"></div>
+  <div class="tiles" id="tiles"></div>
+  <div style="display:flex;gap:10px;margin-top:14px">
+    <button class="btn ghost" id="undoBtn">⬅️ Zurück</button>
+    <button class="btn" id="checkDoneBtn">Fertig! ⭐</button>
+  </div>
+  <p class="msg" id="checkMsg"></p>
+</section>
+
+<!-- ERFOLG -->
+<section class="screen" id="successScreen">
+  <div class="home-stack">
+    <div class="sticker-pop" id="newSticker">🌟</div>
+    <h1 style="font-size:clamp(1.6rem,8vw,2.4rem)">Super gemacht!</h1>
+    <div class="reveal-word" id="successWord"></div>
+    <p class="subtitle">Du hast einen neuen Sticker gewonnen!</p>
+    <button class="btn" id="nextWordBtn">Nächstes Wort ➡️</button>
+    <button class="btn ghost" id="homeFromSuccess">🏠 Zum Start</button>
+  </div>
+</section>
+
+<!-- STICKER-ALBUM -->
+<section class="screen" id="albumScreen">
+  <div class="topbar"><button class="chip" id="albumBack">⬅️ Zurück</button><span></span></div>
+  <h1 style="font-size:clamp(1.6rem,8vw,2.4rem);margin-top:10px">Mein Sticker-Album</h1>
+  <div class="album" id="albumGrid"></div>
+  <p class="empty-note" id="albumEmpty">Noch keine Sticker. Schreib ein Zauberwort richtig und dein erster Sticker wartet auf dich! 💪</p>
+</section>
+
+<!-- ELTERN-TOR -->
+<section class="screen" id="gateScreen">
+  <div class="home-stack">
+    <div class="panel" style="text-align:center">
+      <h2>Elternbereich 🔒</h2>
+      <p class="subtitle">Kleine Rechenaufgabe zum Entsperren:</p>
+      <p style="font-size:1.8rem;font-weight:800;margin:10px 0"><span id="gateQ"></span> = <input class="add-row gate-input" id="gateA" type="number" inputmode="numeric" style="border:3px solid var(--tile-border);border-radius:14px;font-family:inherit;font-weight:800;color:var(--ink);background:var(--bg);padding:8px"></p>
+      <button class="btn secondary" id="gateGo">Entsperren</button>
+      <p class="msg" id="gateMsg"></p>
+    </div>
+    <button class="btn ghost" id="gateBack">⬅️ Zurück</button>
+  </div>
+</section>
+
+<!-- ELTERN-BEREICH -->
+<section class="screen" id="parentScreen">
+  <div class="topbar"><button class="chip" id="parentBack">⬅️ Fertig</button><span></span></div>
+  <div class="panel">
+    <h2>Lernwörter verwalten</h2>
+    <div class="add-row">
+      <input id="newWord" type="text" placeholder="Neues Lernwort…" autocomplete="off" autocapitalize="words">
+      <button class="btn secondary" style="padding:12px 20px;font-size:1rem" id="addWordBtn">＋</button>
+    </div>
+    <ul class="word-list" id="wordList"></ul>
+    <p class="msg" id="parentMsg"></p>
+  </div>
+</section>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Daten ---------- */
+var DEFAULT_WORDS = ["die Birne","die Schule","die Blume","der Regenbogen","das Einhorn"];
+var STICKERS = ["🦄","🌈","⭐","🧁","🦋","🐱","🌸","🍓","💖","🐬","🎀","🧜‍♀️","🌟","🍭","🐰","👑","🫧","🍀"];
+
+function load(key, fallback){
+  try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function save(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+}
+
+var words = load("zw_words", DEFAULT_WORDS.slice());
+var stickers = load("zw_stickers", []);
+var queue = [];
+var currentWord = "";
+var peeks = 0;
+
+/* ---------- Screens ---------- */
+var screens = document.querySelectorAll(".screen");
+function show(id){
+  screens.forEach(function(s){ s.classList.toggle("active", s.id === id); });
+  window.scrollTo(0,0);
+}
+function $(id){ return document.getElementById(id); }
+
+function updateStickerCount(){ $("stickerCount").textContent = stickers.length; }
+updateStickerCount();
+
+/* ---------- Start ---------- */
+$("startBtn").addEventListener("click", function(){
+  if(!words.length){
+    $("homeMsg").textContent = "Noch keine Lernwörter da – frag Mama oder Papa! ⚙️";
+    return;
+  }
+  $("homeMsg").textContent = "";
+  queue = shuffle(words.slice());
+  nextWord();
+});
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+function nextWord(){
+  if(!queue.length) queue = shuffle(words.slice());
+  currentWord = queue.shift();
+  peeks = 0;
+  $("wordDisplay").textContent = currentWord;
+  show("memorizeScreen");
+}
+
+/* ---------- Schreiben (Canvas) ---------- */
+var pad = $("pad"), ctx = pad.getContext("2d");
+var drawing = false, hasInk = false, hue = 0, lastX = 0, lastY = 0;
+
+function sizePad(){
+  var r = pad.parentElement.getBoundingClientRect();
+  var dpr = window.devicePixelRatio || 1;
+  // Zeichnung sichern
+  var old = null;
+  if(hasInk){ old = document.createElement("canvas"); old.width = pad.width; old.height = pad.height; old.getContext("2d").drawImage(pad,0,0); }
+  pad.width = Math.max(1, Math.round(r.width*dpr));
+  pad.height = Math.max(1, Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = 7;
+  if(old){ ctx.drawImage(old, 0, 0, old.width/dpr, old.height/dpr); }
+}
+window.addEventListener("resize", sizePad);
+
+function padPos(e){
+  var r = pad.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+pad.addEventListener("pointerdown", function(e){
+  e.preventDefault();
+  try{ pad.setPointerCapture(e.pointerId); }catch(err){}
+  drawing = true; hasInk = true;
+  $("padHint").style.display = "none";
+  var p = padPos(e); lastX = p.x; lastY = p.y;
+  ctx.strokeStyle = "hsl("+hue+", 85%, 55%)";
+  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x+0.1, p.y+0.1); ctx.stroke();
+});
+pad.addEventListener("pointermove", function(e){
+  if(!drawing) return;
+  e.preventDefault();
+  var p = padPos(e);
+  hue = (hue + 1.5) % 360;
+  ctx.strokeStyle = "hsl("+hue+", 85%, 55%)";
+  ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+  lastX = p.x; lastY = p.y;
+});
+["pointerup","pointercancel","pointerleave"].forEach(function(ev){
+  pad.addEventListener(ev, function(){ drawing = false; });
+});
+
+/* Fallback für ältere iPads ohne Pointer Events */
+if(!window.PointerEvent){
+  pad.addEventListener("touchstart", function(e){
+    e.preventDefault();
+    drawing = true; hasInk = true;
+    $("padHint").style.display = "none";
+    var p = padPos(e.touches[0]); lastX = p.x; lastY = p.y;
+    ctx.strokeStyle = "hsl("+hue+", 85%, 55%)";
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x+0.1, p.y+0.1); ctx.stroke();
+  }, {passive:false});
+  pad.addEventListener("touchmove", function(e){
+    if(!drawing) return;
+    e.preventDefault();
+    var p = padPos(e.touches[0]);
+    hue = (hue + 1.5) % 360;
+    ctx.strokeStyle = "hsl("+hue+", 85%, 55%)";
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }, {passive:false});
+  pad.addEventListener("touchend", function(){ drawing = false; });
+}
+
+$("clearBtn").addEventListener("click", clearPad);
+function clearPad(){
+  ctx.clearRect(0,0,pad.width,pad.height);
+  hasInk = false;
+  $("padHint").style.display = "flex";
+}
+
+$("peekBtn").addEventListener("click", function(){
+  peeks++;
+  $("wordDisplay").textContent = currentWord;
+  show("memorizeScreen");
+});
+
+$("memorizedBtn").addEventListener("click", function(){
+  show("writeScreen");
+  requestAnimationFrame(sizePad);
+});
+
+$("doneWritingBtn").addEventListener("click", function(){
+  buildCheck();
+  show("checkScreen");
+  requestAnimationFrame(function(){ renderMini(); fitSlots(); });
+});
+
+function fitSlots(){
+  var maxLen = 1;
+  currentWord.split(" ").forEach(function(w){ if(w.length > maxLen) maxLen = w.length; });
+  var avail = Math.max(200, slotsEl.clientWidth || 320);
+  var w = Math.floor((avail - (maxLen - 1) * 6) / maxLen);
+  w = Math.min(46, Math.max(22, w));
+  slotsEl.style.setProperty("--slotW", w + "px");
+}
+window.addEventListener("resize", function(){
+  if($("checkScreen").classList.contains("active")) fitSlots();
+});
+
+/* Mini-Vorschau der Zeichnung */
+function renderMini(){
+  var mini = $("miniPad"), mctx = mini.getContext("2d");
+  var w = mini.parentElement ? mini.getBoundingClientRect().width : 320;
+  mini.width = Math.max(1, Math.round(w));
+  mctx.clearRect(0,0,mini.width,mini.height);
+  if(!hasInk || !pad.width) return;
+  var scale = Math.min(mini.width / pad.width, mini.height / pad.height);
+  var dw = pad.width*scale, dh = pad.height*scale;
+  mctx.drawImage(pad, (mini.width-dw)/2, (mini.height-dh)/2, dw, dh);
+}
+
+/* ---------- Buchstaben-Check ---------- */
+var slotsEl = $("slots"), tilesEl = $("tiles");
+var answer = [];
+
+var targetLetters = [];
+
+function buildCheck(){
+  answer = [];
+  $("checkMsg").textContent = "";
+  slotsEl.innerHTML = "";
+  tilesEl.innerHTML = "";
+  // Leerzeichen (z.B. "die Birne") werden automatisch als Lücke angezeigt,
+  // das Kind tippt nur die Buchstaben. Jedes Wort bleibt in einer Reihe.
+  targetLetters = currentWord.split("").filter(function(c){ return c !== " "; });
+  currentWord.split(" ").filter(Boolean).forEach(function(w){
+    var g = document.createElement("div");
+    g.className = "word-group";
+    w.split("").forEach(function(){
+      var s = document.createElement("div");
+      s.className = "slot";
+      g.appendChild(s);
+    });
+    slotsEl.appendChild(g);
+  });
+  // Ablenkungsbuchstaben dazu
+  var pool = targetLetters.slice();
+  var alphabet = "abcdefghiklmnoprstuw".split("");
+  var decoys = 0, want = Math.min(3, Math.max(2, Math.floor(targetLetters.length/2)));
+  while(decoys < want){
+    var c = alphabet[Math.floor(Math.random()*alphabet.length)];
+    pool.push(Math.random() < 0.4 ? c.toUpperCase() : c);
+    decoys++;
+  }
+  shuffle(pool).forEach(function(ch, i){
+    var t = document.createElement("button");
+    t.className = "tile";
+    t.textContent = ch;
+    t.addEventListener("click", function(){ pickTile(t, ch); });
+    tilesEl.appendChild(t);
+  });
+}
+
+function pickTile(tile, ch){
+  if(answer.length >= targetLetters.length) return;
+  tile.classList.add("used");
+  answer.push({ ch: ch, tile: tile });
+  $("checkMsg").textContent = "";
+  renderSlots();
+}
+
+$("undoBtn").addEventListener("click", function(){
+  var last = answer.pop();
+  if(last) last.tile.classList.remove("used");
+  $("checkMsg").textContent = "";
+  renderSlots();
+});
+
+function renderSlots(){
+  var slots = slotsEl.querySelectorAll(".slot");
+  for(var i=0;i<slots.length;i++){
+    slots[i].textContent = answer[i] ? answer[i].ch : "";
+    slots[i].classList.toggle("filled", !!answer[i]);
+  }
+}
+
+$("checkDoneBtn").addEventListener("click", checkAnswer);
+
+function checkAnswer(){
+  if(answer.length < targetLetters.length){
+    $("checkMsg").textContent = "Da fehlen noch Buchstaben! 🧐";
+    return;
+  }
+  var typed = answer.map(function(a){ return a.ch; }).join("");
+  if(typed === targetLetters.join("")){
+    celebrate();
+  } else {
+    slotsEl.classList.add("shake");
+    setTimeout(function(){ slotsEl.classList.remove("shake"); }, 450);
+    $("checkMsg").textContent = "Fast! Das Wort heißt „" + currentWord + "“. Schau es dir nochmal an! 💪";
+    setTimeout(function(){
+      clearPad();
+      $("wordDisplay").textContent = currentWord;
+      show("memorizeScreen");
+    }, 2600);
+  }
+}
+
+/* ---------- Erfolg ---------- */
+function celebrate(){
+  var sticker = STICKERS[Math.floor(Math.random()*STICKERS.length)];
+  stickers.push(sticker);
+  save("zw_stickers", stickers);
+  updateStickerCount();
+  $("newSticker").textContent = sticker;
+  $("successWord").textContent = currentWord + " ✓";
+  show("successScreen");
+  fireConfetti();
+  clearPad();
+}
+
+/* Eingebautes Konfetti – funktioniert komplett offline */
+function fireConfetti(){
+  try{
+    var c = document.createElement("canvas");
+    c.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:999";
+    document.body.appendChild(c);
+    var dpr = window.devicePixelRatio || 1;
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+    var g = c.getContext("2d"); g.scale(dpr, dpr);
+    var colors = ["#FF4FA3","#8B5CF6","#FFC93C","#3ECFAC","#FF8AC2","#B794F6"];
+    var parts = [];
+    function burst(x, y, n, up){
+      for(var i=0;i<n;i++){
+        var a = Math.random()*Math.PI*2;
+        parts.push({
+          x:x, y:y,
+          vx:Math.cos(a)*(2+Math.random()*5),
+          vy:Math.sin(a)*(2+Math.random()*5) - (up?6:3),
+          w:5+Math.random()*6, h:3+Math.random()*5,
+          r:Math.random()*Math.PI, vr:(Math.random()-.5)*.3,
+          col:colors[Math.floor(Math.random()*colors.length)],
+          life:1
+        });
+      }
+    }
+    burst(innerWidth/2, innerHeight*0.55, 90, true);
+    setTimeout(function(){ burst(innerWidth*0.12, innerHeight*0.7, 45, true); }, 200);
+    setTimeout(function(){ burst(innerWidth*0.88, innerHeight*0.7, 45, true); }, 350);
+    var t0 = performance.now();
+    (function tick(now){
+      var done = (now - t0) > 2400;
+      g.clearRect(0,0,innerWidth,innerHeight);
+      parts.forEach(function(p){
+        p.x += p.vx; p.y += p.vy; p.vy += 0.18; p.vx *= 0.99;
+        p.r += p.vr; p.life -= 0.008;
+        if(p.life <= 0) return;
+        g.save();
+        g.translate(p.x, p.y); g.rotate(p.r);
+        g.globalAlpha = Math.max(0, p.life);
+        g.fillStyle = p.col;
+        g.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        g.restore();
+      });
+      if(done){ c.remove(); } else { requestAnimationFrame(tick); }
+    })(t0);
+  }catch(e){}
+}
+
+$("nextWordBtn").addEventListener("click", nextWord);
+$("homeFromSuccess").addEventListener("click", function(){ show("homeScreen"); });
+
+/* ---------- Album ---------- */
+$("albumBtn").addEventListener("click", function(){
+  var grid = $("albumGrid");
+  grid.innerHTML = "";
+  stickers.forEach(function(st){
+    var d = document.createElement("div");
+    d.className = "s"; d.textContent = st;
+    grid.appendChild(d);
+  });
+  $("albumEmpty").style.display = stickers.length ? "none" : "block";
+  show("albumScreen");
+});
+$("albumBack").addEventListener("click", function(){ show("homeScreen"); });
+
+/* ---------- Eltern ---------- */
+var gateSolution = 0;
+$("parentBtn").addEventListener("click", function(){
+  var a = 3 + Math.floor(Math.random()*6), b = 4 + Math.floor(Math.random()*6);
+  gateSolution = a*b;
+  $("gateQ").textContent = a + " × " + b;
+  $("gateA").value = "";
+  $("gateMsg").textContent = "";
+  show("gateScreen");
+});
+$("gateBack").addEventListener("click", function(){ show("homeScreen"); });
+$("gateGo").addEventListener("click", function(){
+  if(parseInt($("gateA").value, 10) === gateSolution){
+    renderWordList();
+    show("parentScreen");
+  } else {
+    $("gateMsg").textContent = "Das stimmt leider nicht – probier's nochmal.";
+  }
+});
+$("gateA").addEventListener("keydown", function(e){ if(e.key==="Enter") $("gateGo").click(); });
+
+function renderWordList(){
+  var ul = $("wordList");
+  ul.innerHTML = "";
+  words.forEach(function(w, i){
+    var li = document.createElement("li");
+    var span = document.createElement("span");
+    span.textContent = w;
+    var del = document.createElement("button");
+    del.className = "del"; del.textContent = "✕";
+    del.setAttribute("aria-label", w + " löschen");
+    del.addEventListener("click", function(){
+      words.splice(i,1);
+      save("zw_words", words);
+      renderWordList();
+    });
+    li.appendChild(span); li.appendChild(del);
+    ul.appendChild(li);
+  });
+  $("parentMsg").textContent = words.length ? "" : "Die Liste ist leer – füge Lernwörter hinzu.";
+}
+
+$("addWordBtn").addEventListener("click", addWord);
+$("newWord").addEventListener("keydown", function(e){ if(e.key==="Enter") addWord(); });
+function addWord(){
+  var v = $("newWord").value.trim();
+  if(!v) return;
+  if(v.length > 20){ $("parentMsg").textContent = "Bitte höchstens 20 Buchstaben."; return; }
+  words.push(v);
+  save("zw_words", words);
+  $("newWord").value = "";
+  $("parentMsg").textContent = "";
+  renderWordList();
+}
+
+$("parentBack").addEventListener("click", function(){ show("homeScreen"); });
+
+})();
+</script>
+</body>
+</html>
